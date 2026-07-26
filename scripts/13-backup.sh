@@ -5,16 +5,11 @@ ROOT_DIR="$(dirname "$SCRIPT_DIR")"
 
 source "$ROOT_DIR/lib/common.sh"
 
-###############################################################################
-# CachyOS Setup - Módulo 12
-# Backup
-###############################################################################
+# CachyOS Setup - Módulo 13
+# Backup del entorno
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 BACKUP_DIR="$ROOT/backups"
-
-info(){ echo -e "\033[1;34m[INFO]\033[0m $1"; }
-ok(){ echo -e "\033[1;32m[ OK ]\033[0m $1"; }
 
 mkdir -p "$BACKUP_DIR"
 
@@ -25,6 +20,8 @@ backup_dir() {
     rsync -a --delete "$SRC/" "$DST/"
     ok "Respaldado: $SRC"
 }
+
+
 
 backup_file() {
     local SRC="$1" DST="$2"
@@ -42,6 +39,10 @@ backup_dir "$HOME/.config/fish" "$BACKUP_DIR/fish"
 backup_dir "$HOME/.config/git" "$BACKUP_DIR/git"
 backup_dir "$HOME/.config/Code/User" "$BACKUP_DIR/vscode/User"
 backup_dir "$HOME/.config/obs-studio" "$BACKUP_DIR/obs"
+backup_dir "$HOME/.var/app/one.ablaze.floorp" "$BACKUP_DIR/browser/floorp"
+
+backup_dir "$HOME/.var/app/com.usebottles.bottles" "$BACKUP_DIR/flatpak/bottles"
+backup_dir "$HOME/.var/app/org.localsend.localsend_app" "$BACKUP_DIR/flatpak/localsend"
 backup_dir "$HOME/.config/syncthing" "$BACKUP_DIR/syncthing"
 backup_dir "$HOME/.ssh" "$BACKUP_DIR/ssh"
 

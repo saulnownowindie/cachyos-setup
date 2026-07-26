@@ -29,7 +29,6 @@ mediainfo
 imagemagick
 yt-dlp
 obs-studio
-kdenlive
 gimp
 inkscape
 vlc
