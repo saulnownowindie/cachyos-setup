@@ -5,10 +5,15 @@ ROOT_DIR="$(dirname "$SCRIPT_DIR")"
 
 source "$ROOT_DIR/lib/common.sh"
 
-# CachyOS Setup - Módulo 09 (v2)
+# CachyOS Setup - Módulo 11
 # Montaje automático de discos NTFS
 
 sudo -v
+
+if ! command -v mount.ntfs >/dev/null 2>&1; then
+    info "Instalando soporte NTFS..."
+    sudo pacman -S --needed --noconfirm ntfs-3g
+fi
 
 info "Detectando discos de datos..."
 
@@ -47,14 +52,17 @@ for ENTRY in "${DISKS[@]}"; do
     SAFE=$(echo "$LABEL" | tr '[:upper:]' '[:lower:]' | tr ' ' '_' | tr -cd 'a-z0-9_-')
 
     MOUNTPOINT="/mnt/$SAFE"
+    if [[ "$LABEL" == "SSD 500GB" ]]; then
+    MOUNTPOINT="/mnt/SSD500"
+fi
 
     sudo mkdir -p "$MOUNTPOINT"
 
     if grep -q "$UUID" /etc/fstab; then
         ok "$LABEL ya está configurado."
     else
-        echo "UUID=$UUID $MOUNTPOINT ntfs3 defaults,uid=$(id -u),gid=$(id -g),nofail 0 0" \
-        | sudo tee -a /etc/fstab >/dev/null
+        echo "UUID=$UUID $MOUNTPOINT ntfs-3g defaults,nofail,uid=$(id -u),gid=$(id -g),umask=022 0 0" \
+| sudo tee -a /etc/fstab >/dev/null
 
         ok "$LABEL agregado a /etc/fstab."
     fi
