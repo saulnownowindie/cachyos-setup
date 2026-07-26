@@ -13,8 +13,7 @@ source "$ROOT_DIR/lib/common.sh"
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 INSTALLER="$ROOT/installers/DaVinci_Resolve_Studio.run"
-DAVINCI_CFG="$ROOT/davinci"
-
+DAVINCI_BACKUP="${DAVINCI_BACKUP:-$ROOT/backups/davinci}"
 info(){ echo -e "\033[1;34m[INFO]\033[0m $1"; }
 ok(){ echo -e "\033[1;32m[ OK ]\033[0m $1"; }
 warn(){ echo -e "\033[1;33m[WARN]\033[0m $1"; }
@@ -73,10 +72,31 @@ fi
 
 mkdir -p "$HOME/.local/share/DaVinciResolve"
 
-if [[ -d "$DAVINCI_CFG" ]]; then
-    info "Restaurando configuración..."
-    cp -a "$DAVINCI_CFG/." "$HOME/.local/share/DaVinciResolve/" || true
+if [[ -d "$DAVINCI_BACKUP" ]]; then
+    info "Restaurando configuración de DaVinci Resolve..."
+
+    mkdir -p "$HOME/.local/share/DaVinciResolve"
+
+rsync -a "$DAVINCI_BACKUP/database/" \
+"$HOME/.local/share/DaVinciResolve/"
+
+    cp -a "$DAVINCI_BACKUP/config/." \
+    "$HOME/.local/share/DaVinciResolve/" || true
+
+    ok "Configuración de DaVinci restaurada."
 fi
+if [[ -d "$DAVINCI_BACKUP/FusionScripts" && -d /opt/resolve ]]; then
+
+    info "Restaurando Fusion Scripts..."
+
+    sudo mkdir -p /opt/resolve/Fusion/Scripts
+
+    sudo rsync -a "$DAVINCI_BACKUP/FusionScripts/" \
+    /opt/resolve/Fusion/Scripts/
+
+    ok "Fusion Scripts restaurados."
+fi
+
 
 if [[ -f /usr/share/applications/com.blackmagicdesign.resolve.desktop ]]; then
     ok "Acceso directo detectado."
@@ -102,10 +122,8 @@ echo "  Instalador : $INSTALLER"
 echo "  Programa   : /opt/resolve"
 echo "  Config     : ~/.local/share/DaVinciResolve"
 echo
-echo "Pendiente para próximas versiones:"
-echo " - LUTs"
-echo " - Power Bins"
-echo " - Fusion"
-echo " - Macros"
-echo " - Fairlight"
-echo " - Presets"
+echo "Restaurado:"
+echo " - Configuración de DaVinci Resolve"
+echo " - Biblioteca de proyectos"
+echo " - Fusion Scripts"
+echo " - Preferencias del usuario"
