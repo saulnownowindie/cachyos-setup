@@ -210,3 +210,10 @@ Recomendado:
 ✅ Backup y restauración  
 ✅ Validación automática  
 ✅ Preparado para creación y gaming
+
+INICAR
+
+sudo pacman -Syu
+git clone git@github.com:saulnownowindie/cachyos-setup.git
+cd cachyos-setup
+bash install.sh
