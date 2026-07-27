@@ -159,26 +159,13 @@ install_yay(){
         return
     fi
 
+    echo "Instalando dependencias para yay..."
 
-echo "Instalando dependencias para yay..."
+    sudo pacman -S --needed --noconfirm base-devel git
 
-sudo pacman -S --needed --noconfirm base-devel git
+    echo "Instalando yay..."
 
-echo "Instalando yay..."
-
-sudo -iu saul bash <<'EOF'
-
-cd /tmp
-
-rm -rf yay
-
-git clone https://aur.archlinux.org/yay.git
-
-cd yay
-
-makepkg -si --noconfirm
-
-EOF
+    sudo -iu saul bash <<'EOF'
 
 cd /tmp
 
@@ -193,9 +180,6 @@ makepkg -si --noconfirm
 EOF
 
 }
-
-
-install_yay
 
 
 
