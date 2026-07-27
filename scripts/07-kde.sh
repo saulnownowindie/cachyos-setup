@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
+
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(dirname "$SCRIPT_DIR")"
 
@@ -7,59 +8,137 @@ source "$ROOT_DIR/lib/common.sh"
 
 ###############################################################################
 # CachyOS Setup - Módulo 07
-# KDE Plasma
+# KDE Plasma + Darkly
 ###############################################################################
 
-info(){ echo -e "\033[1;34m[INFO]\033[0m $1"; }
+info(){
+    echo -e "\033[1;34m[INFO]\033[0m $1"
+}
 
 sudo -v
+
+
+###############################################################################
+# KDE paquetes
+###############################################################################
 
 info "Instalando utilidades KDE..."
 
 sudo pacman -S --needed --noconfirm \
-ark dolphin dolphin-plugins \
-gwenview okular kate \
-spectacle filelight \
+ark \
+dolphin \
+dolphin-plugins \
+gwenview \
+okular \
+kate \
+spectacle \
+filelight \
 partitionmanager \
-kcalc kruler \
+kcalc \
+kruler \
 kdeconnect \
 plasma-firewall \
-ffmpegthumbs
+ffmpegthumbs \
+kdecoration
+
+###############################################################################
+# Servicios
+###############################################################################
 
 info "Habilitando servicios..."
 
 systemctl --user enable kdeconnectd.service >/dev/null 2>&1 || true
 
-kwriteconfig6 --file kdeglobals \
+
+###############################################################################
+# Configuración KDE
+###############################################################################
+
+info "Aplicando configuración KDE..."
+
+
+kwriteconfig6 \
+--file kdeglobals \
 --group KDE \
 --key SingleClick false || true
 
-kwriteconfig6 --file kdeglobals \
+
+kwriteconfig6 \
+--file kdeglobals \
 --group General \
 --key BrowserApplication floorp.desktop || true
 
-kwriteconfig6 --file dolphinrc \
+
+kwriteconfig6 \
+--file dolphinrc \
 --group General \
 --key RememberOpenedTabs true || true
 
-kwriteconfig6 --file dolphinrc \
+
+kwriteconfig6 \
+--file dolphinrc \
 --group General \
 --key ConfirmClosingMultipleTabs false || true
 
-kwriteconfig6 --file kwinrc \
+
+kwriteconfig6 \
+--file kwinrc \
 --group Windows \
 --key BorderlessMaximizedWindows false || true
 
+
+###############################################################################
+# Aplicar Darkly
+###############################################################################
+
+info "Configurando tema Darkly..."
+
+
+kwriteconfig6 \
+--file kdeglobals \
+--group KDE \
+--key widgetStyle \
+Darkly || true
+
+
+kwriteconfig6 \
+--file kdeglobals \
+--group General \
+--key ColorScheme \
+Ant-Dark || true
+
+
+###############################################################################
+# Restaurar archivos Darkly del backup si existen
+###############################################################################
+
+BACKUP_DARKLY="$HOME/.cache/cachyos-setup/Darkly"
+
+if [[ -d "$BACKUP_DARKLY" ]]; then
+
+    info "Darkly encontrado en cache."
+
+fi
+
+
+###############################################################################
+# Recargar KDE
+###############################################################################
+
 qdbus6 org.kde.KWin /KWin reconfigure >/dev/null 2>&1 || true
+
 
 echo
 echo "======================================"
 echo " KDE configurado"
 echo "======================================"
 echo
-echo "Configuraciones aplicadas:"
+echo "Aplicado:"
+echo "- KDE Plasma"
+echo "- Darkly"
+echo "- Ant-Dark"
 echo "- Doble clic"
-echo "- Floorp como navegador"
+echo "- Floorp navegador"
 echo "- Dolphin recuerda pestañas"
-echo "- Sin borde en maximizadas desactivado"
-echo "- KDE Connect habilitado"
+echo "- KDE Connect"
+echo

@@ -113,7 +113,7 @@ echo "$SETUP_ROOT"
 echo
 echo "Verificando backup..."
 
-bash "$SETUP_ROOT/scripts/15-verify-backup.sh" "$BACKUP_ROOT"
+bash "$SETUP_ROOT/scripts/16-verify-backup.sh" "$BACKUP_ROOT"
 
 ok "Backup válido"
 
@@ -264,9 +264,9 @@ fi
 echo
 echo "Configurando discos..."
 
-if [[ -x "$SETUP_ROOT/scripts/11-drives.sh" ]]; then
+if [[ -x "$SETUP_ROOT/scripts/12-drives.sh" ]]; then
 
-    bash "$SETUP_ROOT/scripts/11-drives.sh" || true
+    bash "$SETUP_ROOT/scripts/12-drives.sh" || true
 
     ok "Discos configurados"
 
@@ -284,9 +284,9 @@ echo "Instalando DaVinci..."
 export DAVINCI_BACKUP="$BACKUP_ROOT/davinci"
 
 
-if [[ -x "$SETUP_ROOT/scripts/10-davinci.sh" ]]; then
+if [[ -x "$SETUP_ROOT/scripts/11-davinci.sh" ]]; then
 
-    bash "$SETUP_ROOT/scripts/10-davinci.sh"
+    bash "$SETUP_ROOT/scripts/11-davinci.sh"
 
     ok "DaVinci terminado"
 
@@ -363,7 +363,7 @@ echo "Ejecutando verificación final..."
 
 sudo -u saul \
 XDG_RUNTIME_DIR=/run/user/$(id -u saul) \
-bash "$SETUP_ROOT/scripts/14-verify.sh"
+bash "$SETUP_ROOT/scripts/15-verify.sh"
 
 
 
