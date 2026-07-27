@@ -8,27 +8,10 @@ set -Eeuo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(dirname "$SCRIPT_DIR")"
+source "$ROOT_DIR/lib/common.sh"
 if [[ $EUID -eq 0 ]]; then
     echo "Ejecutando restore con sudo..."
 fi
-
-###############################################################################
-# Funciones
-###############################################################################
-
-ok(){
-    echo -e "\033[1;32m[ OK ]\033[0m $1"
-}
-
-warn(){
-    echo -e "\033[1;33m[WARN]\033[0m $1"
-}
-
-fail(){
-    echo -e "\033[1;31m[FAIL]\033[0m $1"
-    exit 1
-}
-
 
 ###############################################################################
 # Buscar backup
