@@ -73,17 +73,29 @@ fi
 mkdir -p "$HOME/.local/share/DaVinciResolve"
 
 if [[ -d "$DAVINCI_BACKUP" ]]; then
+
     info "Restaurando configuración de DaVinci Resolve..."
 
     mkdir -p "$HOME/.local/share/DaVinciResolve"
 
-rsync -a "$DAVINCI_BACKUP/database/" \
-"$HOME/.local/share/DaVinciResolve/"
+    if [[ -d "$DAVINCI_BACKUP/database" ]]; then
+        rsync -a \
+        "$DAVINCI_BACKUP/database/" \
+        "$HOME/.local/share/DaVinciResolve/"
+    fi
 
-    cp -a "$DAVINCI_BACKUP/config/." \
-    "$HOME/.local/share/DaVinciResolve/" || true
+
+    if [[ -d "$DAVINCI_BACKUP/config" ]]; then
+
+        cp -a \
+        "$DAVINCI_BACKUP/config/." \
+        "$HOME/.local/share/DaVinciResolve/"
+
+    fi
+
 
     ok "Configuración de DaVinci restaurada."
+
 fi
 if [[ -d "$DAVINCI_BACKUP/FusionScripts" && -d /opt/resolve ]]; then
 

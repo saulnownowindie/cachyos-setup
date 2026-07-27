@@ -2,7 +2,8 @@
 set -Eeuo pipefail
 
 BACKUPS="${1:-}"
-
+USER_HOME="/home/saul"
+USER_NAME="saul"
 if [[ -z "$BACKUPS" ]]; then
     echo "Uso:"
     echo "./restore.sh /ruta/al/backup"
@@ -45,74 +46,91 @@ echo "================================"
 
 # Shell
 copydir "$BACKUPS/fish" \
-"$HOME/.config/fish"
+"$USER_HOME/.config/fish"
 
 copyfile "$BACKUPS/starship.toml" \
-"$HOME/.config/starship.toml"
+"$USER_HOME/.config/starship.toml"
 
 
 # Git
 copyfile "$BACKUPS/git/.gitconfig" \
-"$HOME/.gitconfig"
+"$USER_HOME/.gitconfig"
 
 
 # VS Code
 copydir "$BACKUPS/vscode/User" \
-"$HOME/.config/Code/User"
+"$USER_HOME/.config/Code/User"
 
 
 # Floorp
 copydir "$BACKUPS/browser/floorp" \
-"$HOME/.var/app/one.ablaze.floorp"
+"$USER_HOME/.var/app/one.ablaze.floorp"
 
 
 # Syncthing
 copydir "$BACKUPS/syncthing" \
-"$HOME/.config/syncthing"
+"$USER_HOME/.config/syncthing"
+
+# Activar servicios de usuario
+if [[ -f "$BACKUPS/systemd-user-services.txt" ]]; then
+
+    echo "Restaurando servicios de usuario..."
+
+    while read -r SERVICE _; do
+
+        [[ -z "$SERVICE" ]] && continue
+
+        sudo -u "$USER_NAME" \
+        XDG_RUNTIME_DIR=/run/user/$(id -u "$USER_NAME") \
+        systemctl --user enable --now "$SERVICE" || true
+
+    done < "$BACKUPS/systemd-user-services.txt"
+
+fi
 
 
 # OBS
 copydir "$BACKUPS/obs" \
-"$HOME/.config/obs-studio"
+"$USER_HOME/.config/obs-studio"
 
 
 # SSH
 copydir "$BACKUPS/ssh" \
-"$HOME/.ssh"
+"$USER_HOME/.ssh"
 
-chmod 700 "$HOME/.ssh" 2>/dev/null || true
+chmod 700 "$USER_HOME/.ssh" 2>/dev/null || true
 
 
 # KDE
 copyfile "$BACKUPS/kde/kdeglobals" \
-"$HOME/.config/kdeglobals"
+"$USER_HOME/.config/kdeglobals"
 
 copyfile "$BACKUPS/kde/kwinrc" \
-"$HOME/.config/kwinrc"
+"$USER_HOME/.config/kwinrc"
 
 copyfile "$BACKUPS/kde/kglobalshortcutsrc" \
-"$HOME/.config/kglobalshortcutsrc"
+"$USER_HOME/.config/kglobalshortcutsrc"
 
 copyfile "$BACKUPS/kde/dolphinrc" \
-"$HOME/.config/dolphinrc"
+"$USER_HOME/.config/dolphinrc"
 
 copyfile "$BACKUPS/kde/plasma-org.kde.plasma.desktop-appletsrc" \
-"$HOME/.config/plasma-org.kde.plasma.desktop-appletsrc"
+"$USER_HOME/.config/plasma-org.kde.plasma.desktop-appletsrc"
 
 copydir "$BACKUPS/kde/plasma" \
-"$HOME/.local/share/plasma"
+"$USER_HOME/.local/share/plasma"
 
 copydir "$BACKUPS/kde/kscreen" \
-"$HOME/.local/share/kscreen"
+"$USER_HOME/.local/share/kscreen"
 
 
 
 # DaVinci Resolve
 copydir "$BACKUPS/davinci/database" \
-"$HOME/.local/share/DaVinciResolve"
+"$USER_HOME/.local/share/DaVinciResolve"
 
 copydir "$BACKUPS/davinci/config" \
-"$HOME/.config/DaVinciResolve"
+"$USER_HOME/.config/DaVinciResolve"
 
 
 if [[ -d "$BACKUPS/davinci/FusionScripts" ]]; then
@@ -134,11 +152,11 @@ fi
 # Fuentes del usuario
 if [[ -d "$BACKUPS/fonts/user" ]]; then
 
-    mkdir -p "$HOME/.local/share/fonts"
+    mkdir -p "$USER_HOME/.local/share/fonts"
 
     rsync -a \
     "$BACKUPS/fonts/user/" \
-    "$HOME/.local/share/fonts/"
+    "$USER_HOME/.local/share/fonts/"
 
     echo "Restauradas fuentes de usuario."
 
@@ -148,11 +166,11 @@ fi
 # Fuentes legacy
 if [[ -d "$BACKUPS/fonts/legacy" ]]; then
 
-    mkdir -p "$HOME/.fonts"
+    mkdir -p "$USER_HOME/.fonts"
 
     rsync -a \
     "$BACKUPS/fonts/legacy/" \
-    "$HOME/.fonts/"
+    "$USER_HOME/.fonts/"
 
     echo "Restauradas fuentes legacy."
 
@@ -178,12 +196,18 @@ fi
 # Reconstruir caché
 if command -v fc-cache >/dev/null; then
 
-    fc-cache -fv || true
-    sudo fc-cache -f -v || true
+   sudo -u "$USER_NAME" fc-cache -fv || true
+  sudo fc-cache -f -v || true
 
 fi
 
+echo "Corrigiendo permisos de usuario..."
 
+chown -R "$USER_NAME:$USER_NAME" "$USER_HOME/.config" 2>/dev/null || true
+chown -R "$USER_NAME:$USER_NAME" "$USER_HOME/.local" 2>/dev/null || true
+chown "$USER_NAME:$USER_NAME" "$USER_HOME" 2>/dev/null || true
+chown "$USER_NAME:$USER_NAME" "$USER_HOME/.gitconfig" 2>/dev/null || true
+chown -R "$USER_NAME:$USER_NAME" "$USER_HOME/.ssh" 2>/dev/null || true
 echo
 echo "================================"
 echo " Restauración finalizada"

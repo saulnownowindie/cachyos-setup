@@ -8,195 +8,278 @@ source "$ROOT_DIR/lib/common.sh"
 
 ###############################################################################
 # CachyOS Setup - Módulo 13
-# Backup del entorno
+# Backup completo del sistema
 ###############################################################################
 
-ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-BACKUP_DIR="$ROOT/backups"
+BACKUP_ROOT="${BACKUP_DIR:-/mnt/CACHY-BACKUP/backups}"
 
-mkdir -p "$BACKUP_DIR"
+TARGET_USER="saul"
+TARGET_HOME="/home/$TARGET_USER"
+BACKUP_MAIN="$(dirname "$BACKUP_ROOT")"
+USER_HOME="/home/saul"
+USER_NAME="saul"
+mkdir -p "$BACKUP_ROOT"
 
 
 backup_dir() {
+
     local SRC="$1"
     local DST="$2"
+
 
     [[ -d "$SRC" ]] || return 0
 
+
     mkdir -p "$(dirname "$DST")"
 
-    rsync -a --delete "$SRC/" "$DST/"
+
+    rsync -a --delete \
+    "$SRC/" \
+    "$DST/"
+
 
     ok "Respaldado: $SRC"
+
 }
+
 
 
 backup_file() {
+
     local SRC="$1"
     local DST="$2"
 
+
     [[ -f "$SRC" ]] || return 0
+
 
     mkdir -p "$(dirname "$DST")"
 
+
     cp -f "$SRC" "$DST"
 
+
     ok "Respaldado: $SRC"
+
 }
 
 
+
+echo
 echo "=========================================="
-echo " Backup del entorno"
+echo " Backup CachyOS"
+echo " Destino: $BACKUP_ROOT"
 echo "=========================================="
 
 
+
+###############################################################################
+# Información sistema
+###############################################################################
+
+mkdir -p "$BACKUP_ROOT/system"
+
+
+uname -a \
+> "$BACKUP_ROOT/system/kernel.txt"
+
+
+if command -v nvidia-smi >/dev/null; then
+
+    nvidia-smi \
+    > "$BACKUP_ROOT/system/nvidia.txt"
+
+fi
+
+
+###############################################################################
 # Servicios usuario
+###############################################################################
+
+sudo -u "$USER_NAME" \
+XDG_RUNTIME_DIR=/run/user/$(id -u "$USER_NAME") \
 systemctl --user list-unit-files --state=enabled \
-> "$BACKUP_DIR/systemd-user-services.txt" || true
-
-ok "Lista de servicios de usuario guardada."
+> "$BACKUP_ROOT/systemd-user-services.txt" || true
 
 
-# Shell
-backup_dir "$HOME/.config/fish" \
-"$BACKUP_DIR/fish"
 
-backup_file "$HOME/.config/starship.toml" \
-"$BACKUP_DIR/starship.toml"
+###############################################################################
+# Usuario
+###############################################################################
+
+backup_dir \
+"$USER_HOME/.config/fish" \
+"$BACKUP_ROOT/fish"
+
+
+
+backup_file \
+"$USER_HOME/.config/starship.toml" \
+"$BACKUP_ROOT/starship.toml"
+
+
+
+###############################################################################
+# Git
+###############################################################################
+
+backup_file \
+"$USER_HOME/.gitconfig" \
+"$BACKUP_ROOT/git/.gitconfig"
+
+
+
+backup_dir \
+"$USER_HOME/.ssh" \
+"$BACKUP_ROOT/ssh"
+
+
+
+###############################################################################
+# VS Code
+###############################################################################
+
+backup_dir \
+"$USER_HOME/.config/Code/User" \
+"$BACKUP_ROOT/vscode/User"
+
+
+
+if command -v code >/dev/null; then
+
+    mkdir -p "$BACKUP_ROOT/vscode"
+
+    sudo -u "$USER_NAME" \
+    code --list-extensions \
+    > "$BACKUP_ROOT/vscode/extensions.txt" || true
+
+
+    ok "Extensiones VS Code guardadas."
+
+fi
+
+
 
 ###############################################################################
 # Fuentes
 ###############################################################################
 
-# Todas las fuentes instaladas por el usuario
-backup_dir "$HOME/.local/share/fonts" \
-"$BACKUP_DIR/fonts/user"
+backup_dir \
+"$USER_HOME/.local/share/fonts" \
+"$BACKUP_ROOT/fonts/user"
 
 
-# Fuentes antiguas (compatibilidad)
-backup_dir "$HOME/.fonts" \
-"$BACKUP_DIR/fonts/legacy"
+
+backup_dir \
+"$USER_HOME/.fonts" \
+"$BACKUP_ROOT/fonts/legacy"
 
 
-# Fuentes añadidas manualmente al sistema
-# Ej: fuentes para DaVinci Resolve
-backup_dir "/usr/share/fonts/custom" \
-"$BACKUP_DIR/fonts/custom"
 
-# Git
-backup_dir "$HOME/.config/git" \
-"$BACKUP_DIR/git"
-
-backup_file "$HOME/.gitconfig" \
-"$BACKUP_DIR/git/.gitconfig"
+backup_dir \
+"/usr/share/fonts/custom" \
+"$BACKUP_ROOT/fonts/custom"
 
 
-# VS Code
-backup_dir "$HOME/.config/Code/User" \
-"$BACKUP_DIR/vscode/User"
 
-if command -v code >/dev/null; then
+###############################################################################
+# Aplicaciones
+###############################################################################
 
-    mkdir -p "$BACKUP_DIR/vscode"
-
-    code --list-extensions \
-    > "$BACKUP_DIR/vscode/extensions.txt" || true
-
-    ok "Extensiones de VS Code guardadas."
-
-fi
+backup_dir \
+"$USER_HOME/.var/app/one.ablaze.floorp" \
+"$BACKUP_ROOT/browser/floorp"
 
 
-# Navegador Floorp Flatpak
-backup_dir "$HOME/.var/app/one.ablaze.floorp" \
-"$BACKUP_DIR/browser/floorp"
+
+backup_dir \
+"$USER_HOME/.config/obs-studio" \
+"$BACKUP_ROOT/obs"
 
 
-# Flatpaks con configuración
-backup_dir "$HOME/.var/app/com.usebottles.bottles" \
-"$BACKUP_DIR/flatpak/bottles"
 
-backup_dir "$HOME/.var/app/org.localsend.localsend_app" \
-"$BACKUP_DIR/flatpak/localsend"
+backup_dir \
+"$USER_HOME/.config/syncthing" \
+"$BACKUP_ROOT/syncthing"
 
-
-# Syncthing
-backup_dir "$HOME/.config/syncthing" \
-"$BACKUP_DIR/syncthing"
-
-
-# SSH
-backup_dir "$HOME/.ssh" \
-"$BACKUP_DIR/ssh"
-
-
-# Konsole
-backup_dir "$HOME/.config/konsole" \
-"$BACKUP_DIR/konsole"
 
 
 ###############################################################################
 # DaVinci Resolve
 ###############################################################################
 
-# Fusion Scripts externos
-backup_dir "/opt/resolve/Fusion/Scripts" \
-"$BACKUP_DIR/davinci/FusionScripts"
+backup_dir \
+"/opt/resolve/Fusion/Scripts" \
+"$BACKUP_ROOT/davinci/FusionScripts"
 
 
-# Configuración DaVinci completa
-mkdir -p "$BACKUP_DIR/davinci/database"
 
-if [[ -d "$HOME/.local/share/DaVinciResolve" ]]; then
+if [[ -d "$USER_HOME/.local/share/DaVinciResolve" ]]; then
 
-    rsync -a --delete \
-    --exclude="logs" \
-    --exclude=".cache" \
-    --exclude=".ui.cache.db" \
-    "$HOME/.local/share/DaVinciResolve/" \
-    "$BACKUP_DIR/davinci/database/"
 
-    ok "DaVinci Resolve respaldado."
+rsync -a --delete \
+--exclude="logs" \
+--exclude=".cache" \
+"$USER_HOME/.local/share/DaVinciResolve/" \
+"$BACKUP_ROOT/davinci/database/"
+
+
+ok "DaVinci respaldado."
+
 
 fi
 
 
-# Config adicional
-backup_dir "$HOME/.config/DaVinciResolve" \
-"$BACKUP_DIR/davinci/config"
+
+backup_dir \
+"$USER_HOME/.config/DaVinciResolve" \
+"$BACKUP_ROOT/davinci/config"
 
 
 
 ###############################################################################
-# KDE Plasma
+# KDE
 ###############################################################################
 
-backup_file "$HOME/.config/kdeglobals" \
-"$BACKUP_DIR/kde/kdeglobals"
+backup_file \
+"$USER_HOME/.config/kdeglobals" \
+"$BACKUP_ROOT/kde/kdeglobals"
 
-backup_file "$HOME/.config/kwinrc" \
-"$BACKUP_DIR/kde/kwinrc"
 
-backup_file "$HOME/.config/plasma-org.kde.plasma.desktop-appletsrc" \
-"$BACKUP_DIR/kde/plasma-org.kde.plasma.desktop-appletsrc"
 
-backup_dir "$HOME/.local/share/plasma" \
-"$BACKUP_DIR/kde/plasma"
+backup_file \
+"$USER_HOME/.config/kwinrc" \
+"$BACKUP_ROOT/kde/kwinrc"
 
-backup_dir "$HOME/.local/share/kxmlgui5" \
-"$BACKUP_DIR/kde/kxmlgui5"
 
-backup_file "$HOME/.config/kglobalshortcutsrc" \
-"$BACKUP_DIR/kde/kglobalshortcutsrc"
 
-backup_file "$HOME/.config/dolphinrc" \
-"$BACKUP_DIR/kde/dolphinrc"
+backup_file \
+"$USER_HOME/.config/kglobalshortcutsrc" \
+"$BACKUP_ROOT/kde/kglobalshortcutsrc"
 
-backup_file "$HOME/.config/kscreenlockerrc" \
-"$BACKUP_DIR/kde/kscreenlockerrc"
 
-backup_dir "$HOME/.local/share/kscreen" \
-"$BACKUP_DIR/kde/kscreen"
+
+backup_file \
+"$USER_HOME/.config/dolphinrc" \
+"$BACKUP_ROOT/kde/dolphinrc"
+
+
+
+backup_file \
+"$USER_HOME/.config/plasma-org.kde.plasma.desktop-appletsrc" \
+"$BACKUP_ROOT/kde/plasma-org.kde.plasma.desktop-appletsrc"
+
+
+
+backup_dir \
+"$USER_HOME/.local/share/plasma" \
+"$BACKUP_ROOT/kde/plasma"
+
+
+
+backup_dir \
+"$USER_HOME/.local/share/kscreen" \
+"$BACKUP_ROOT/kde/kscreen"
 
 
 
@@ -204,28 +287,59 @@ backup_dir "$HOME/.local/share/kscreen" \
 # Paquetes
 ###############################################################################
 
-pacman -Qqm \
-> "$BACKUP_DIR/aur-packages.txt" || true
-
-ok "Lista de paquetes AUR guardada."
-
-
 pacman -Qqe \
-> "$BACKUP_DIR/packages.txt" || true
-
-ok "Lista de paquetes guardada."
+> "$BACKUP_ROOT/packages.txt" || true
 
 
-flatpak list --app --columns=application,origin \
-> "$BACKUP_DIR/flatpaks.txt" || true
-
-ok "Lista de Flatpaks guardada."
+pacman -Qqm \
+> "$BACKUP_ROOT/aur-packages.txt" || true
 
 
+
+###############################################################################
+# Flatpaks
+###############################################################################
+
+echo "Guardando Flatpaks..."
+
+touch "$BACKUP_ROOT/flatpaks.txt"
+
+sudo -u "$USER_NAME" \
+XDG_RUNTIME_DIR=/run/user/$(id -u "$USER_NAME") \
+flatpak list --user --app --columns=application,origin \
+>> "$BACKUP_ROOT/flatpaks.txt" || true
+
+
+flatpak list --system --app --columns=application,origin \
+>> "$BACKUP_ROOT/flatpaks.txt" || true
+
+
+ok "Flatpaks guardados."
+###############################################################################
+# Guardar scripts de recuperación
+###############################################################################
+
+if [[ -d "$ROOT_DIR" ]]; then
+
+
+rsync -a \
+--exclude=".git" \
+"$ROOT_DIR/" \
+"$BACKUP_MAIN/cachyos-setup/"
+
+
+ok "Scripts CachyOS guardados."
+
+
+fi
+
+chown -R "$USER_NAME:$USER_NAME" "$BACKUP_ROOT"
 
 echo
 echo "=========================================="
-echo " Backup finalizado"
+echo " Backup terminado"
 echo "=========================================="
 
-find "$BACKUP_DIR" -maxdepth 2 | sort
+
+
+find "$BACKUP_ROOT" -maxdepth 2 | sort

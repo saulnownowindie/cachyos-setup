@@ -1,38 +1,68 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
+
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(dirname "$SCRIPT_DIR")"
 
 source "$ROOT_DIR/lib/common.sh"
 
+
 check_cmd() {
+
     local cmd="$1"
     local nombre="$2"
     local version=""
 
-if ! command -v "$cmd" >/dev/null 2>&1; then
-    check_fail "$nombre"
-    return
-fi
+    if ! command -v "$cmd" >/dev/null 2>&1; then
+        check_fail "$nombre"
+        return
+    fi
+
 
     case "$cmd" in
-        git)        version="v$(git --version | awk '{print $3}')" ;;
-        gh)         version="v$(gh --version | awk 'NR==1{print $3}')" ;;
-        node)       version="$(node --version)" ;;
-        pnpm)       version="v$(pnpm --version)" ;;
-        bun)        version="v$(bun --version)" ;;
-        code)       version="v$(code --version | head -n1)" ;;
-        ffmpeg)     version="$(ffmpeg -version | awk 'NR==1{print $3}')" ;;
-        syncthing)  version="$(syncthing --version | awk 'NR==1{print $2}')" ;;
-        *)
-                    version=""
-    ;;
+
+        git)
+            version="v$(git --version | awk '{print $3}')"
+        ;;
+
+        gh)
+            version="v$(gh --version | awk 'NR==1{print $3}')"
+        ;;
+
+        node)
+            version="$(node --version)"
+        ;;
+
+        pnpm)
+            version="v$(pnpm --version)"
+        ;;
+
+        bun)
+            version="v$(bun --version)"
+        ;;
+
+        code)
+            version="$(code --version | head -n1)"
+        ;;
+
+        ffmpeg)
+            version="$(ffmpeg -version | awk 'NR==1{print $3}')"
+        ;;
+
+        syncthing)
+            version="$(syncthing --version | awk 'NR==1{print $2}')"
+        ;;
+
     esac
 
+
     ok "$nombre $version"
+
 }
 
+
 title "Verificación del sistema"
+
 
 check_cmd git "Git"
 check_cmd gh "GitHub CLI"
@@ -43,9 +73,13 @@ check_cmd code "VS Code"
 check_cmd ffmpeg "FFmpeg"
 check_cmd syncthing "Syncthing"
 
+
+
+# AutoSubs
+
 if command -v autosubs >/dev/null 2>&1 \
-   && [[ -x /usr/bin/autosubs-real ]] \
-   && [[ -f /opt/resolve/Fusion/Scripts/Utility/AutoSubs.lua ]]; then
+&& [[ -x /usr/bin/autosubs-real ]] \
+&& [[ -f /opt/resolve/Fusion/Scripts/Utility/AutoSubs.lua ]]; then
 
     ok "AutoSubs"
 
@@ -55,25 +89,44 @@ else
 
 fi
 
+
+
+# NVIDIA
+
 if nvidia-smi >/dev/null 2>&1; then
+
     ok "NVIDIA"
+
 else
+
     check_fail "NVIDIA"
+
 fi
 
-if command -v resolve >/dev/null 2>&1 \
-   || [[ -x /opt/resolve/bin/resolve ]]; then
+
+
+# DaVinci
+
+if [[ -x /opt/resolve/bin/resolve ]]; then
 
     ok "DaVinci Resolve"
 
 else
 
-    warn "DaVinci Resolve no instalado"
+    warn "DaVinci Resolve"
 
 fi
 
-if systemctl --user is-enabled syncthing >/dev/null 2>&1 &&
-   systemctl --user is-active syncthing >/dev/null 2>&1; then
+
+
+# Syncthing
+
+if sudo -u saul \
+XDG_RUNTIME_DIR=/run/user/$(id -u saul) \
+systemctl --user is-enabled syncthing >/dev/null 2>&1 \
+&& sudo -u saul \
+XDG_RUNTIME_DIR=/run/user/$(id -u saul) \
+systemctl --user is-active syncthing >/dev/null 2>&1; then
 
     ok "Servicio Syncthing"
 
@@ -83,18 +136,66 @@ else
 
 fi
 
-if findmnt -rn -S /dev/sdb1 >/dev/null 2>&1 &&
-   findmnt -rn -S /dev/sdc2 >/dev/null 2>&1; then
 
-    ok "Discos de datos"
+
+###############################################################################
+# Discos
+###############################################################################
+
+echo
+echo "Discos"
+echo "--------------------------------"
+
+
+DISCOS=(
+    "SSD500:/mnt/SSD500"
+    "HDDX201TB:/mnt/hddx201tb"
+)
+
+
+for DISCO in "${DISCOS[@]}"; do
+
+    NOMBRE="${DISCO%%:*}"
+    RUTA="${DISCO#*:}"
+
+    if mountpoint -q "$RUTA"; then
+        ok "$NOMBRE"
+    else
+        warn "$NOMBRE"
+    fi
+
+done
+
+
+# KDE
+if [[ "${XDG_CURRENT_DESKTOP:-}" == *KDE* ]] \
+|| [[ -n "$(pgrep -u saul plasmashell)" ]]; then
+
+    ok "KDE Plasma"
 
 else
 
-    warn "Discos de datos"
+    warn "No estás en KDE Plasma"
 
 fi
 
-[[ "${XDG_CURRENT_DESKTOP:-}" == *KDE* ]] && ok "KDE Plasma" || warn "No estás en KDE Plasma"
+
+# Fuentes
+
+# Fuentes
+
+if [[ -d /usr/share/fonts/custom/Oswald ]] \
+&& compgen -G "/usr/share/fonts/custom/Oswald/*.ttf" > /dev/null; then
+
+    ok "Fuentes personalizadas"
+
+else
+
+    warn "Fuentes personalizadas"
+
+fi
+
+
 
 echo
 echo "================ RESUMEN ================"
@@ -102,5 +203,6 @@ echo "OK   : $OK"
 echo "WARN : $WARN"
 echo "FAIL : $FAIL"
 echo "========================================="
+
 
 ((FAIL==0))
