@@ -225,7 +225,10 @@ sudo -u saul flatpak remote-add \
 
 ok "Flathub listo."
 
-
+flatpak --user remote-add \
+    --if-not-exists \
+    flathub \
+    https://flathub.org/repo/flathub.flatpakrepo || true
 while IFS=$'\t' read -r APP ORIGIN; do
 
     [[ -z "$APP" ]] && continue
