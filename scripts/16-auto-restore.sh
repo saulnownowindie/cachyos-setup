@@ -147,30 +147,52 @@ fi
 
 
 ###############################################################################
-# Instalar yay
+# Instalar yay correctamente como usuario
 ###############################################################################
 
-if ! command -v yay >/dev/null 2>&1; then
+install_yay(){
 
-echo
-echo "Instalando yay..."
+    if command -v yay >/dev/null 2>&1; then
+        return
+    fi
+
+
+echo "Instalando dependencias para yay..."
 
 sudo pacman -S --needed --noconfirm base-devel git
 
+echo "Instalando yay..."
 
-TMP=$(mktemp -d)
+sudo -u saul bash <<'EOF'
 
-git clone https://aur.archlinux.org/yay.git "$TMP/yay"
+cd /tmp
 
-cd "$TMP/yay"
+rm -rf yay
+
+git clone https://aur.archlinux.org/yay.git
+
+cd yay
 
 makepkg -si --noconfirm
 
-cd "$ROOT_DIR"
+EOF
 
-rm -rf "$TMP"
+cd /tmp
 
-fi
+rm -rf yay
+
+git clone https://aur.archlinux.org/yay.git
+
+cd yay
+
+makepkg -si --noconfirm
+
+EOF
+
+}
+
+
+install_yay
 
 
 
@@ -185,10 +207,15 @@ echo "Restaurando AUR..."
 
 mapfile -t AUR < "$BACKUP_ROOT/aur-packages.txt"
 
-yay -S --needed --noconfirm "${AUR[@]}" || true
+
+sudo -u saul bash <<EOF
+yay -S --needed --noconfirm ${AUR[*]}
+EOF
+
+
+ok "AUR restaurado"
 
 fi
-
 
 
 ###############################################################################
@@ -201,13 +228,17 @@ echo
 echo "Restaurando Flatpaks..."
 
 
+sudo -u saul flatpak remote-add --if-not-exists \
+flathub \
+https://flathub.org/repo/flathub.flatpakrepo || true
+
+
 while IFS=$'\t' read -r APP ORIGIN; do
 
     [[ -z "$APP" ]] && continue
     [[ "$APP" == "Application" ]] && continue
 
-    flatpak install -y "$ORIGIN" "$APP" || true
-
+    sudo -u saul flatpak install --user -y "$ORIGIN" "$APP" || true
 
 done < "$BACKUP_ROOT/flatpaks.txt"
 
