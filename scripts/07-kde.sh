@@ -8,7 +8,7 @@ source "$ROOT_DIR/lib/common.sh"
 
 ###############################################################################
 # CachyOS Setup - Módulo 07
-# KDE Plasma + Darkly
+# KDE Plasma
 ###############################################################################
 
 info(){
@@ -86,28 +86,6 @@ kwriteconfig6 \
 --group Windows \
 --key BorderlessMaximizedWindows false || true
 
-
-###############################################################################
-# Aplicar Darkly
-###############################################################################
-
-info "Configurando tema Darkly..."
-
-
-kwriteconfig6 \
---file kdeglobals \
---group KDE \
---key widgetStyle \
-Darkly || true
-
-
-kwriteconfig6 \
---file kdeglobals \
---group General \
---key ColorScheme \
-Ant-Dark || true
-
-
 ###############################################################################
 # Restaurar archivos Darkly del backup si existen
 ###############################################################################
@@ -135,8 +113,6 @@ echo "======================================"
 echo
 echo "Aplicado:"
 echo "- KDE Plasma"
-echo "- Darkly"
-echo "- Ant-Dark"
 echo "- Doble clic"
 echo "- Floorp navegador"
 echo "- Dolphin recuerda pestañas"

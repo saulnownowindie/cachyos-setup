@@ -13,7 +13,7 @@ FAIL=0
 ok(){
 
 echo "[ OK ] $1"
-((OK++))
+OK=$((OK+1))
 
 }
 
@@ -21,7 +21,7 @@ echo "[ OK ] $1"
 warn(){
 
 echo "[WARN] $1"
-((WARN++))
+WARN=$((WARN+1))
 
 }
 
@@ -29,7 +29,7 @@ echo "[WARN] $1"
 fail(){
 
 echo "[FAIL] $1"
-((FAIL++))
+FAIL=$((FAIL+1))
 
 }
 
@@ -64,9 +64,11 @@ echo "--------------------------------"
 
 
 
-[[ -d "$BACKUP/fish" ]] \
-&& ok "Fish" \
-|| warn "Fish"
+if [[ -d "$BACKUP/fish" ]]; then
+    ok "Fish backup encontrado."
+else
+    warn "Fish backup no encontrado."
+fi
 
 
 
