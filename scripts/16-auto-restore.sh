@@ -8,6 +8,9 @@ set -Eeuo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(dirname "$SCRIPT_DIR")"
+if [[ $EUID -eq 0 ]]; then
+    echo "Ejecutando restore con sudo..."
+fi
 
 ###############################################################################
 # Funciones
@@ -163,7 +166,7 @@ sudo pacman -S --needed --noconfirm base-devel git
 
 echo "Instalando yay..."
 
-sudo -u saul bash <<'EOF'
+sudo -iu saul bash <<'EOF'
 
 cd /tmp
 
