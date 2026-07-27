@@ -2,8 +2,11 @@
 set -Eeuo pipefail
 
 BACKUPS="${1:-}"
+
 USER_HOME="/home/saul"
 USER_NAME="saul"
+
+
 if [[ -z "$BACKUPS" ]]; then
     echo "Uso:"
     echo "./restore.sh /ruta/al/backup"
@@ -12,8 +15,9 @@ fi
 
 
 copydir(){
-    SRC="$1"
-    DST="$2"
+
+    local SRC="$1"
+    local DST="$2"
 
     [[ -d "$SRC" ]] || return 0
 
@@ -22,12 +26,14 @@ copydir(){
     rsync -a "$SRC/" "$DST/"
 
     echo "Restaurado: $DST"
+
 }
 
 
 copyfile(){
-    SRC="$1"
-    DST="$2"
+
+    local SRC="$1"
+    local DST="$2"
 
     [[ -f "$SRC" ]] || return 0
 
@@ -36,7 +42,9 @@ copyfile(){
     cp -f "$SRC" "$DST"
 
     echo "Restaurado: $DST"
+
 }
+
 
 
 echo "================================"
@@ -44,93 +52,167 @@ echo " Restaurando CachyOS"
 echo "================================"
 
 
-# Shell
-copydir "$BACKUPS/fish" \
+
+###############################################################################
+# Usuario
+###############################################################################
+
+copydir \
+"$BACKUPS/fish" \
 "$USER_HOME/.config/fish"
 
-copyfile "$BACKUPS/starship.toml" \
+
+copyfile \
+"$BACKUPS/starship.toml" \
 "$USER_HOME/.config/starship.toml"
 
 
+
+###############################################################################
 # Git
-copyfile "$BACKUPS/git/.gitconfig" \
+###############################################################################
+
+copyfile \
+"$BACKUPS/git/.gitconfig" \
 "$USER_HOME/.gitconfig"
 
 
+
+###############################################################################
 # VS Code
-copydir "$BACKUPS/vscode/User" \
+###############################################################################
+
+copydir \
+"$BACKUPS/vscode/User" \
 "$USER_HOME/.config/Code/User"
 
 
+
+###############################################################################
 # Floorp
-copydir "$BACKUPS/browser/floorp" \
+###############################################################################
+
+copydir \
+"$BACKUPS/browser/floorp" \
 "$USER_HOME/.var/app/one.ablaze.floorp"
 
 
+
+###############################################################################
 # Syncthing
-copydir "$BACKUPS/syncthing" \
+###############################################################################
+
+copydir \
+"$BACKUPS/syncthing" \
 "$USER_HOME/.config/syncthing"
 
-# Activar servicios de usuario
-if [[ -f "$BACKUPS/systemd-user-services.txt" ]]; then
 
-    echo "Restaurando servicios de usuario..."
 
-    while read -r SERVICE _; do
+###############################################################################
+# OBS
+###############################################################################
 
-        [[ -z "$SERVICE" ]] && continue
+copydir \
+"$BACKUPS/obs" \
+"$USER_HOME/.config/obs-studio"
 
-        sudo -u "$USER_NAME" \
-        XDG_RUNTIME_DIR=/run/user/$(id -u "$USER_NAME") \
-        systemctl --user enable --now "$SERVICE" || true
 
-    done < "$BACKUPS/systemd-user-services.txt"
+
+###############################################################################
+# SSH
+###############################################################################
+
+if [[ -d "$BACKUPS/ssh" ]]; then
+
+    echo "Restaurando SSH..."
+
+    mkdir -p "$USER_HOME/.ssh"
+
+    rsync -a \
+    "$BACKUPS/ssh/" \
+    "$USER_HOME/.ssh/"
+
+    chown -R "$USER_NAME:$USER_NAME" \
+    "$USER_HOME/.ssh"
+
+    chmod 700 \
+    "$USER_HOME/.ssh"
+
+
+    find "$USER_HOME/.ssh" \
+    -type f \
+    ! -name "*.pub" \
+    -exec chmod 600 {} \;
+
+
+    find "$USER_HOME/.ssh" \
+    -name "*.pub" \
+    -exec chmod 644 {} \;
+
+
+    [[ -f "$USER_HOME/.ssh/known_hosts" ]] &&
+    chmod 644 "$USER_HOME/.ssh/known_hosts"
+
+
+    [[ -f "$USER_HOME/.ssh/config" ]] &&
+    chmod 600 "$USER_HOME/.ssh/config"
+
+
+    echo "SSH restaurado."
 
 fi
 
 
-# OBS
-copydir "$BACKUPS/obs" \
-"$USER_HOME/.config/obs-studio"
 
-
-# SSH
-copydir "$BACKUPS/ssh" \
-"$USER_HOME/.ssh"
-
-chmod 700 "$USER_HOME/.ssh" 2>/dev/null || true
-
-
+###############################################################################
 # KDE
+###############################################################################
+
 copyfile "$BACKUPS/kde/kdeglobals" \
 "$USER_HOME/.config/kdeglobals"
+
 
 copyfile "$BACKUPS/kde/kwinrc" \
 "$USER_HOME/.config/kwinrc"
 
+
 copyfile "$BACKUPS/kde/kglobalshortcutsrc" \
 "$USER_HOME/.config/kglobalshortcutsrc"
+
 
 copyfile "$BACKUPS/kde/dolphinrc" \
 "$USER_HOME/.config/dolphinrc"
 
-copyfile "$BACKUPS/kde/plasma-org.kde.plasma.desktop-appletsrc" \
+
+copyfile \
+"$BACKUPS/kde/plasma-org.kde.plasma.desktop-appletsrc" \
 "$USER_HOME/.config/plasma-org.kde.plasma.desktop-appletsrc"
 
-copydir "$BACKUPS/kde/plasma" \
+
+copydir \
+"$BACKUPS/kde/plasma" \
 "$USER_HOME/.local/share/plasma"
 
-copydir "$BACKUPS/kde/kscreen" \
+
+copydir \
+"$BACKUPS/kde/kscreen" \
 "$USER_HOME/.local/share/kscreen"
 
 
 
+###############################################################################
 # DaVinci Resolve
-copydir "$BACKUPS/davinci/database" \
+###############################################################################
+
+copydir \
+"$BACKUPS/davinci/database" \
 "$USER_HOME/.local/share/DaVinciResolve"
 
-copydir "$BACKUPS/davinci/config" \
+
+copydir \
+"$BACKUPS/davinci/config" \
 "$USER_HOME/.config/DaVinciResolve"
+
 
 
 if [[ -d "$BACKUPS/davinci/FusionScripts" ]]; then
@@ -145,11 +227,12 @@ if [[ -d "$BACKUPS/davinci/FusionScripts" ]]; then
 
 fi
 
+
+
 ###############################################################################
 # Fuentes
 ###############################################################################
 
-# Fuentes del usuario
 if [[ -d "$BACKUPS/fonts/user" ]]; then
 
     mkdir -p "$USER_HOME/.local/share/fonts"
@@ -158,12 +241,9 @@ if [[ -d "$BACKUPS/fonts/user" ]]; then
     "$BACKUPS/fonts/user/" \
     "$USER_HOME/.local/share/fonts/"
 
-    echo "Restauradas fuentes de usuario."
-
 fi
 
 
-# Fuentes legacy
 if [[ -d "$BACKUPS/fonts/legacy" ]]; then
 
     mkdir -p "$USER_HOME/.fonts"
@@ -172,15 +252,10 @@ if [[ -d "$BACKUPS/fonts/legacy" ]]; then
     "$BACKUPS/fonts/legacy/" \
     "$USER_HOME/.fonts/"
 
-    echo "Restauradas fuentes legacy."
-
 fi
 
 
-# Fuentes del sistema personalizadas
 if [[ -d "$BACKUPS/fonts/custom" ]]; then
-
-    echo "Restaurando fuentes del sistema..."
 
     sudo mkdir -p /usr/share/fonts/custom
 
@@ -188,26 +263,71 @@ if [[ -d "$BACKUPS/fonts/custom" ]]; then
     "$BACKUPS/fonts/custom/" \
     /usr/share/fonts/custom/
 
-    echo "Restauradas fuentes custom."
+fi
+
+
+
+###############################################################################
+# Activar servicios de usuario
+if [[ -f "$BACKUPS/systemd-user-services.txt" ]]; then
+
+    echo "Restaurando servicios..."
+
+    while read -r SERVICE STATE; do
+
+        [[ "$SERVICE" == "UNIT" ]] && continue
+        [[ -z "$SERVICE" ]] && continue
+
+        if systemctl --user list-unit-files "$SERVICE" >/dev/null 2>&1; then
+
+            sudo -u "$USER_NAME" \
+            XDG_RUNTIME_DIR=/run/user/$(id -u "$USER_NAME") \
+            systemctl --user enable --now "$SERVICE" || true
+
+        fi
+
+    done < "$BACKUPS/systemd-user-services.txt"
 
 fi
 
 
-# Reconstruir caché
-if command -v fc-cache >/dev/null; then
 
-   sudo -u "$USER_NAME" fc-cache -fv || true
-  sudo fc-cache -f -v || true
+###############################################################################
+# Permisos finales
+###############################################################################
 
-fi
+echo "Corrigiendo permisos..."
 
-echo "Corrigiendo permisos de usuario..."
 
-chown -R "$USER_NAME:$USER_NAME" "$USER_HOME/.config" 2>/dev/null || true
-chown -R "$USER_NAME:$USER_NAME" "$USER_HOME/.local" 2>/dev/null || true
-chown "$USER_NAME:$USER_NAME" "$USER_HOME" 2>/dev/null || true
-chown "$USER_NAME:$USER_NAME" "$USER_HOME/.gitconfig" 2>/dev/null || true
-chown -R "$USER_NAME:$USER_NAME" "$USER_HOME/.ssh" 2>/dev/null || true
+chown -R "$USER_NAME:$USER_NAME" \
+"$USER_HOME/.config" 2>/dev/null || true
+
+
+chown -R "$USER_NAME:$USER_NAME" \
+"$USER_HOME/.local" 2>/dev/null || true
+
+
+chown "$USER_NAME:$USER_NAME" \
+"$USER_HOME/.gitconfig" 2>/dev/null || true
+
+
+chown "$USER_NAME:$USER_NAME" \
+"$USER_HOME" 2>/dev/null || true
+
+
+
+###############################################################################
+# Fuentes cache
+###############################################################################
+
+echo "Actualizando fuentes..."
+
+sudo -u "$USER_NAME" fc-cache -f || true
+
+sudo fc-cache -f || true
+
+
+
 echo
 echo "================================"
 echo " Restauración finalizada"

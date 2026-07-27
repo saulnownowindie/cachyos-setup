@@ -158,31 +158,26 @@ for DISCO in "${DISCOS[@]}"; do
     NOMBRE="${DISCO%%:*}"
     RUTA="${DISCO#*:}"
 
-    if mountpoint -q "$RUTA"; then
+
+    # Activar automount si existe
+    ls "$RUTA" >/dev/null 2>&1 || true
+
+
+    if [[ -d "$RUTA" ]] && ls "$RUTA" >/dev/null 2>&1; then
+
         ok "$NOMBRE"
+
     else
+
         warn "$NOMBRE"
+
     fi
 
 done
 
-
-# KDE
-if [[ "${XDG_CURRENT_DESKTOP:-}" == *KDE* ]] \
-|| [[ -n "$(pgrep -u saul plasmashell)" ]]; then
-
-    ok "KDE Plasma"
-
-else
-
-    warn "No estás en KDE Plasma"
-
-fi
-
-
+###############################################################################
 # Fuentes
-
-# Fuentes
+###############################################################################
 
 if [[ -d /usr/share/fonts/custom/Oswald ]] \
 && compgen -G "/usr/share/fonts/custom/Oswald/*.ttf" > /dev/null; then
