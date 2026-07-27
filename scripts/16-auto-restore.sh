@@ -326,7 +326,44 @@ done < "$BACKUP_ROOT/flatpaks.txt"
 
 fi
 
+###############################################################################
+# AutoSubs
+###############################################################################
 
+echo
+echo "Instalando AutoSubs..."
+
+if [[ -x "$SETUP_ROOT/scripts/08-autosubs.sh" ]]; then
+
+    bash "$SETUP_ROOT/scripts/08-autosubs.sh"
+
+    ok "AutoSubs instalado"
+
+else
+
+    warn "No se encontró módulo AutoSubs"
+
+fi
+
+###############################################################################
+# Discos
+###############################################################################
+
+echo
+echo "Configurando discos..."
+
+
+if [[ -x "$SETUP_ROOT/scripts/11-drives.sh" ]]; then
+
+    bash "$SETUP_ROOT/scripts/11-drives.sh"
+
+    ok "Discos configurados"
+
+else
+
+    warn "No se encontró módulo de discos"
+
+fi
 
 ###############################################################################
 # DaVinci Resolve
@@ -336,25 +373,20 @@ echo
 echo "Restaurando DaVinci Resolve..."
 
 
+export DAVINCI_BACKUP="$BACKUP_ROOT/davinci"
+
 
 if [[ -x "$SETUP_ROOT/scripts/10-davinci.sh" ]]; then
 
-
     bash "$SETUP_ROOT/scripts/10-davinci.sh"
 
-
+    ok "DaVinci procesado"
 
 else
 
-
     warn "No se encontró instalador DaVinci"
 
-
-
 fi
-
-
-
 ###############################################################################
 # Configuración usuario
 ###############################################################################
