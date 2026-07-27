@@ -215,17 +215,41 @@ echo
 echo "Restaurando Flatpaks..."
 
 
-echo
-echo "Restaurando Flatpaks..."
+info "Configurando Flathub..."
 
-flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
+sudo -u saul flatpak remote-add \
+    --if-not-exists \
+    flathub \
+    https://flathub.org/repo/flathub.flatpakrepo || true
+
+
+ok "Flathub listo."
+
 
 while IFS=$'\t' read -r APP ORIGIN; do
 
     [[ -z "$APP" ]] && continue
     [[ "$APP" == "Application" ]] && continue
 
-    sudo -u saul flatpak install --user -y "$ORIGIN" "$APP" || true
+
+    info "Instalando $APP..."
+
+
+    if sudo -u saul flatpak install \
+        --user \
+        --noninteractive \
+        -y \
+        "$ORIGIN" \
+        "$APP"; then
+
+        ok "$APP instalado."
+
+    else
+
+        warn "No se pudo instalar $APP"
+
+    fi
+
 
 done < "$BACKUP_ROOT/flatpaks.txt"
 
