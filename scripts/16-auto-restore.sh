@@ -215,10 +215,10 @@ echo
 echo "Restaurando Flatpaks..."
 
 
-sudo -u saul flatpak remote-add --if-not-exists \
-flathub \
-https://flathub.org/repo/flathub.flatpakrepo || true
+echo
+echo "Restaurando Flatpaks..."
 
+flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
 
 while IFS=$'\t' read -r APP ORIGIN; do
 
