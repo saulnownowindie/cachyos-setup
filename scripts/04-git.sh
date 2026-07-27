@@ -45,8 +45,9 @@ if [[ ! -f "$KEY" ]]; then
 else
     ok "Clave SSH existente."
 fi
-
-if ! pgrep -u "$USER" ssh-agent >/dev/null; then
+chmod 600 "$KEY"
+chmod 644 "$KEY.pub" 2>/dev/null || true
+if [[ -z "${SSH_AUTH_SOCK:-}" ]]; then
     eval "$(ssh-agent -s)" >/dev/null
 fi
 
