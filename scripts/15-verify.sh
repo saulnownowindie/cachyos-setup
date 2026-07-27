@@ -16,7 +16,7 @@ FAIL=0
 ok(){
 
     echo "[ OK ] $1"
-    ((OK++))
+    OK=$((OK+1))
 
 }
 
@@ -24,7 +24,7 @@ ok(){
 warn(){
 
     echo "[WARN] $1"
-    ((WARN++))
+    WARN=$((WARN+1))
 
 }
 
@@ -32,7 +32,7 @@ warn(){
 fail(){
 
     echo "[FAIL] $1"
-    ((FAIL++))
+    FAIL=$((FAIL+1))
 
 }
 
@@ -208,10 +208,10 @@ for ITEM in "${DISCOS[@]}"; do
 
 
     NAME="${ITEM%%:*}"
-    PATH="${ITEM#*:}"
+    MOUNT_PATH="${ITEM#*:}"
 
 
-    if mountpoint -q "$PATH"; then
+    if mountpoint -q "$MOUNT_PATH"; then
 
         ok "$NAME"
 
