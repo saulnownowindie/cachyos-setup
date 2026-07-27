@@ -2,59 +2,55 @@
 set -Eeuo pipefail
 
 
-BACKUP_ROOT="${1:-/mnt/CACHY-BACKUP/backups}"
+BACKUP="${1:-}"
 
 
-ERRORS=0
+OK=0
+WARN=0
+FAIL=0
 
 
 ok(){
-    echo "[ OK ] $1"
+
+echo "[ OK ] $1"
+((OK++))
+
 }
 
 
 warn(){
-    echo "[WARN] $1"
+
+echo "[WARN] $1"
+((WARN++))
+
 }
 
 
 fail(){
-    echo "[FAIL] $1"
-    ERRORS=$((ERRORS+1))
-}
 
-
-
-check_dir(){
-
-    if [[ -d "$1" ]]; then
-        ok "$2"
-    else
-        fail "$2"
-    fi
+echo "[FAIL] $1"
+((FAIL++))
 
 }
 
 
 
-check_file(){
+if [[ -z "$BACKUP" ]]; then
 
-    if [[ -f "$1" ]]; then
-        ok "$2"
-    else
-        fail "$2"
-    fi
+echo "Uso:"
+echo "$0 /ruta/backups"
 
-}
+exit 1
+
+fi
 
 
 
 echo
 echo "=========================================="
 echo " Verificando backup CachyOS"
-echo " Ruta: $BACKUP_ROOT"
+echo " Ruta: $BACKUP"
 echo "=========================================="
-echo
 
 
 
@@ -62,37 +58,27 @@ echo
 # Usuario
 ###############################################################################
 
+echo
 echo "Usuario"
 echo "--------------------------------"
 
 
-check_dir \
-"$BACKUP_ROOT/fish" \
-"Fish"
+
+[[ -d "$BACKUP/fish" ]] \
+&& ok "Fish" \
+|| warn "Fish"
 
 
 
-if [[ -f "$BACKUP_ROOT/starship.toml" ]]; then
-
-    ok "Starship"
-
-else
-
-    warn "Starship no configurado"
-
-fi
+[[ -f "$BACKUP/git/.gitconfig" ]] \
+&& ok "Git config" \
+|| warn "Git config"
 
 
 
-check_file \
-"$BACKUP_ROOT/git/.gitconfig" \
-"Git config"
-
-
-
-check_dir \
-"$BACKUP_ROOT/vscode/User" \
-"VS Code"
+[[ -d "$BACKUP/vscode/User" ]] \
+&& ok "VS Code" \
+|| warn "VS Code"
 
 
 
@@ -105,27 +91,16 @@ echo "Fuentes"
 echo "--------------------------------"
 
 
-check_dir \
-"$BACKUP_ROOT/fonts/user" \
-"Fuentes usuario"
+
+[[ -d "$BACKUP/fonts/user" ]] \
+&& ok "Fuentes usuario" \
+|| warn "Fuentes usuario"
 
 
 
-check_dir \
-"$BACKUP_ROOT/fonts/custom" \
-"Fuentes sistema"
-
-
-
-if [[ -d "$BACKUP_ROOT/fonts/legacy" ]]; then
-
-    ok "Fuentes legacy"
-
-else
-
-    warn "Sin fuentes legacy"
-
-fi
+[[ -d "$BACKUP/fonts/custom" ]] \
+&& ok "Fuentes sistema" \
+|| warn "Fuentes sistema"
 
 
 
@@ -138,33 +113,22 @@ echo "Aplicaciones"
 echo "--------------------------------"
 
 
-check_dir \
-"$BACKUP_ROOT/browser/floorp" \
-"Floorp"
+
+[[ -d "$BACKUP/browser/floorp" ]] \
+&& ok "Floorp" \
+|| warn "Floorp"
 
 
 
-if [[ -d "$BACKUP_ROOT/obs" ]]; then
-
-    ok "OBS"
-
-else
-
-    warn "Sin configuración OBS"
-
-fi
+[[ -d "$BACKUP/obs" ]] \
+&& ok "OBS" \
+|| warn "Sin configuración OBS"
 
 
 
-if [[ -d "$BACKUP_ROOT/syncthing" ]]; then
-
-    ok "Syncthing"
-
-else
-
-    warn "Sin configuración Syncthing"
-
-fi
+[[ -d "$BACKUP/syncthing" ]] \
+&& ok "Syncthing" \
+|| warn "Sin configuración Syncthing"
 
 
 
@@ -177,27 +141,16 @@ echo "DaVinci Resolve"
 echo "--------------------------------"
 
 
-check_dir \
-"$BACKUP_ROOT/davinci/database" \
-"Base DaVinci"
+
+[[ -d "$BACKUP/davinci/database" ]] \
+&& ok "Base DaVinci" \
+|| warn "Base DaVinci"
 
 
 
-check_dir \
-"$BACKUP_ROOT/davinci/FusionScripts" \
-"Fusion Scripts"
-
-
-
-if [[ -d "$BACKUP_ROOT/davinci/config" ]]; then
-
-    ok "Configuración DaVinci"
-
-else
-
-    warn "Sin configuración externa DaVinci"
-
-fi
+[[ -d "$BACKUP/davinci/FusionScripts" ]] \
+&& ok "Fusion Scripts" \
+|| warn "Fusion Scripts"
 
 
 
@@ -210,21 +163,22 @@ echo "KDE Plasma"
 echo "--------------------------------"
 
 
-check_file \
-"$BACKUP_ROOT/kde/kdeglobals" \
-"KDE globals"
+
+[[ -f "$BACKUP/kde/kdeglobals" ]] \
+&& ok "KDE globals" \
+|| warn "KDE globals"
 
 
 
-check_file \
-"$BACKUP_ROOT/kde/kwinrc" \
-"KWin"
+[[ -f "$BACKUP/kde/kwinrc" ]] \
+&& ok "KWin" \
+|| warn "KWin"
 
 
 
-check_file \
-"$BACKUP_ROOT/kde/kglobalshortcutsrc" \
-"Atajos KDE"
+[[ -f "$BACKUP/kde/kglobalshortcutsrc" ]] \
+&& ok "Atajos KDE" \
+|| warn "Atajos KDE"
 
 
 
@@ -237,41 +191,45 @@ echo "Paquetes"
 echo "--------------------------------"
 
 
-check_file \
-"$BACKUP_ROOT/packages.txt" \
-"Pacman"
+
+[[ -f "$BACKUP/packages.txt" ]] \
+&& ok "Pacman" \
+|| fail "Pacman"
 
 
 
-check_file \
-"$BACKUP_ROOT/aur-packages.txt" \
-"AUR"
+[[ -f "$BACKUP/aur-packages.txt" ]] \
+&& ok "AUR" \
+|| warn "AUR"
 
 
 
-check_file \
-"$BACKUP_ROOT/flatpaks.txt" \
-"Flatpaks"
+[[ -f "$BACKUP/flatpaks.txt" ]] \
+&& ok "Flatpaks" \
+|| fail "Flatpaks"
 
 
-
-###############################################################################
-# Resultado
-###############################################################################
 
 echo
 echo "=========================================="
 
 
-if [[ $ERRORS -eq 0 ]]; then
+if [[ "$FAIL" -eq 0 ]]; then
 
-    echo " BACKUP COMPLETO"
+echo " BACKUP COMPLETO"
 
 else
 
-    echo " BACKUP INCOMPLETO"
-    echo "Faltan: $ERRORS elementos"
-
-    exit 1
+echo " BACKUP INCOMPLETO"
 
 fi
+
+
+echo
+echo "OK   : $OK"
+echo "WARN : $WARN"
+echo "FAIL : $FAIL"
+
+
+
+[[ "$FAIL" -eq 0 ]]
