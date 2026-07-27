@@ -47,6 +47,7 @@ copyfile(){
 
 
 
+echo
 echo "================================"
 echo " Restaurando CachyOS"
 echo "================================"
@@ -122,45 +123,46 @@ copydir \
 # SSH
 ###############################################################################
 
-if [[ -d "$BACKUPS/ssh" ]]; then
+echo "Restaurando SSH..."
 
-    echo "Restaurando SSH..."
 
-    mkdir -p "$USER_HOME/.ssh"
+copydir \
+"$BACKUPS/ssh" \
+"$USER_HOME/.ssh"
 
-    rsync -a \
-    "$BACKUPS/ssh/" \
-    "$USER_HOME/.ssh/"
+
+
+if [[ -d "$USER_HOME/.ssh" ]]; then
+
 
     chown -R "$USER_NAME:$USER_NAME" \
     "$USER_HOME/.ssh"
 
+
     chmod 700 \
     "$USER_HOME/.ssh"
-
-
-    find "$USER_HOME/.ssh" \
-    -type f \
-    ! -name "*.pub" \
-    -exec chmod 600 {} \;
-
-
-    find "$USER_HOME/.ssh" \
-    -name "*.pub" \
-    -exec chmod 644 {} \;
-
-
-    [[ -f "$USER_HOME/.ssh/known_hosts" ]] &&
-    chmod 644 "$USER_HOME/.ssh/known_hosts"
 
 
     [[ -f "$USER_HOME/.ssh/config" ]] &&
     chmod 600 "$USER_HOME/.ssh/config"
 
 
-    echo "SSH restaurado."
+    [[ -f "$USER_HOME/.ssh/id_ed25519" ]] &&
+    chmod 600 "$USER_HOME/.ssh/id_ed25519"
+
+
+    [[ -f "$USER_HOME/.ssh/id_ed25519.pub" ]] &&
+    chmod 644 "$USER_HOME/.ssh/id_ed25519.pub"
+
+
+    [[ -f "$USER_HOME/.ssh/known_hosts" ]] &&
+    chmod 644 "$USER_HOME/.ssh/known_hosts"
+
 
 fi
+
+
+echo "SSH restaurado."
 
 
 
@@ -217,13 +219,17 @@ copydir \
 
 if [[ -d "$BACKUPS/davinci/FusionScripts" ]]; then
 
-    sudo mkdir -p /opt/resolve/Fusion/Scripts
 
-    sudo rsync -a \
+    mkdir -p /opt/resolve/Fusion/Scripts
+
+
+    rsync -a \
     "$BACKUPS/davinci/FusionScripts/" \
     /opt/resolve/Fusion/Scripts/
 
+
     echo "Restaurado: Fusion Scripts"
+
 
 fi
 
@@ -235,58 +241,80 @@ fi
 
 if [[ -d "$BACKUPS/fonts/user" ]]; then
 
+
     mkdir -p "$USER_HOME/.local/share/fonts"
+
 
     rsync -a \
     "$BACKUPS/fonts/user/" \
     "$USER_HOME/.local/share/fonts/"
 
+
 fi
+
 
 
 if [[ -d "$BACKUPS/fonts/legacy" ]]; then
 
+
     mkdir -p "$USER_HOME/.fonts"
+
 
     rsync -a \
     "$BACKUPS/fonts/legacy/" \
     "$USER_HOME/.fonts/"
 
+
 fi
+
 
 
 if [[ -d "$BACKUPS/fonts/custom" ]]; then
 
-    sudo mkdir -p /usr/share/fonts/custom
 
-    sudo rsync -a \
+    mkdir -p /usr/share/fonts/custom
+
+
+    rsync -a \
     "$BACKUPS/fonts/custom/" \
     /usr/share/fonts/custom/
+
 
 fi
 
 
 
 ###############################################################################
-# Activar servicios de usuario
+# Servicios usuario
+###############################################################################
+
 if [[ -f "$BACKUPS/systemd-user-services.txt" ]]; then
+
 
     echo "Restaurando servicios..."
 
+
     while read -r SERVICE STATE; do
 
-        [[ "$SERVICE" == "UNIT" ]] && continue
-        [[ -z "$SERVICE" ]] && continue
 
-        if systemctl --user list-unit-files "$SERVICE" >/dev/null 2>&1; then
+        [[ -z "$SERVICE" ]] && continue
+        [[ "$SERVICE" == "UNIT" ]] && continue
+
+
+        if systemctl --user list-unit-files "$SERVICE" \
+        >/dev/null 2>&1; then
+
 
             sudo -u "$USER_NAME" \
             XDG_RUNTIME_DIR=/run/user/$(id -u "$USER_NAME") \
             systemctl --user enable --now "$SERVICE" || true
 
+
         fi
 
+
     done < "$BACKUPS/systemd-user-services.txt"
+
 
 fi
 
@@ -299,20 +327,38 @@ fi
 echo "Corrigiendo permisos..."
 
 
-chown -R "$USER_NAME:$USER_NAME" \
-"$USER_HOME/.config" 2>/dev/null || true
-
 
 chown -R "$USER_NAME:$USER_NAME" \
-"$USER_HOME/.local" 2>/dev/null || true
+"$USER_HOME/.config" \
+2>/dev/null || true
+
+
+
+chown -R "$USER_NAME:$USER_NAME" \
+"$USER_HOME/.local" \
+2>/dev/null || true
+
 
 
 chown "$USER_NAME:$USER_NAME" \
-"$USER_HOME/.gitconfig" 2>/dev/null || true
+"$USER_HOME/.gitconfig" \
+2>/dev/null || true
 
 
-chown "$USER_NAME:$USER_NAME" \
-"$USER_HOME" 2>/dev/null || true
+
+chown -R "$USER_NAME:$USER_NAME" \
+"$USER_HOME/.ssh" \
+2>/dev/null || true
+
+
+
+chmod 700 "$USER_HOME/.ssh" \
+2>/dev/null || true
+
+
+
+chmod 600 "$USER_HOME/.ssh/config" \
+2>/dev/null || true
 
 
 
@@ -321,6 +367,7 @@ chown "$USER_NAME:$USER_NAME" \
 ###############################################################################
 
 echo "Actualizando fuentes..."
+
 
 sudo -u "$USER_NAME" fc-cache -f || true
 
